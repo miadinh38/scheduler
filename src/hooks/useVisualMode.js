@@ -10,7 +10,11 @@ const useVisualMode = (initial) => {
   }
   
   function back() {
-    setHistory(prev => [...prev.slice(0, prev.length - 1)])
+    if (history.length > 1) {
+      setHistory(prev => prev.slice(0, prev.length - 1)); // Remove the last item from the history stack
+      setMode(history[history.length - 2]); // Revert to the previous mode
+    }
+  
   }
 
   return { mode: history[history.length -1], transition, back };
