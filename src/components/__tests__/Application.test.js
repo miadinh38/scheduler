@@ -1,11 +1,11 @@
 import React from "react";
 
 
-import { render, cleanup } from "@testing-library/react";
+import { render, cleanup, waitForElementToBeRemoved, queryByAltText } from "@testing-library/react";
 
 import Application from "components/Application";
 
-import { waitForElement, getByText, prettyDOM, fireEvent, getAllByTestId, getByPlaceholderText, getByAltText } from "@testing-library/react";
+import { waitForElement, getByText, prettyDOM, fireEvent, getAllByTestId, getByPlaceholderText, getByAltText, queryByText } from "@testing-library/react";
 
 afterEach(cleanup);
 
@@ -24,26 +24,37 @@ describe("Application", () => {
   });
 
   it("loads data, books an interview and reduces the spots remaining for the first day by 1", async() => {
-    const { container } = render(<Application/>)
+    const { container, debug } = render(<Application/>)
 
     await waitForElement(() => getByText(container, "Archie Cohen"));
 
-    // search all appoinments in the container
+    // search all appointments in the container
     const appointments = getAllByTestId(container, "appointment");
 
     // search the first appointment
-    const appoinment = getAllByTestId(container, "appointment")[0];
+    const appointment = appointments[0];
 
-    fireEvent.click(getByAltText(appoinment, "Add"));
+    fireEvent.click(getByAltText(appointment, "Add"));
 
-    fireEvent.change(getByPlaceholderText(appoinment, /enter student name/i), {
+    fireEvent.change(getByPlaceholderText(appointment, /enter student name/i), {
       target: { value: "Lydia Miller-Jones" }
     });
 
-    fireEvent.click(getByAltText(appoinment, "Sylvia Palmer"));
+    fireEvent.click(getByAltText(appointment, "Sylvia Palmer"));
 
-    fireEvent.click(getByText(appoinment, "Save"));
-    console.log(prettyDOM(container));
+    fireEvent.click(getByText(appointment, "Save"));
+
+    expect(getByText(appointment, "Saving")).toBeInTheDocument();
+
+    // Wait for the "Saving" text to be removed
+    await waitForElementToBeRemoved(() => getByText(appointment, "Saving"));
+
+    expect(getByText(appointment, "Lydia Miller-Jones")).toBeInTheDocument();
+
+    const day = getAllByTestId(container, "day").find(day => 
+      queryByText(day, "Monday"));
+  
+    expect(getByText(day, "no spots remaining")).toBeInTheDocument();
   });
 
 });
